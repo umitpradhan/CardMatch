@@ -1,3 +1,4 @@
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using CardMatch.Core.Domain;
@@ -17,6 +18,8 @@ namespace CardMatch.Core.GameFlow
 
         private readonly Queue<CardModel> _flipQueue = new();
         private bool _isProcessing;
+        public event Action OnMatch;
+        public event Action OnMismatch;
 
         private int _score;
         private float _remainingTime;
@@ -73,8 +76,8 @@ namespace CardMatch.Core.GameFlow
 
                 if (result == MatchResult.Match)
                 {
-                    first.MarkMatched();
-                    second.MarkMatched();
+                    first?.MarkMatched();
+                    second?.MarkMatched();
 
                     _comboTracker.RegisterMatch();
 
@@ -87,8 +90,10 @@ namespace CardMatch.Core.GameFlow
                     var viewA = _boardView.GetView(first.Id);
                     var viewB = _boardView.GetView(second.Id);
 
-                    viewA.PlayMatch();
-                    viewB.PlayMatch();
+                    viewA?.PlayMatch();
+                    viewB?.PlayMatch();
+
+                    OnMatch?.Invoke();
                 }
                 else
                 {
@@ -98,14 +103,16 @@ namespace CardMatch.Core.GameFlow
 
                     yield return new UnityEngine.WaitForSeconds(0.4f);
 
-                    first.FlipDown();
-                    second.FlipDown();
+                    first?.FlipDown();
+                    second?.FlipDown();
 
                     var viewA = _boardView.GetView(first.Id);
                     var viewB = _boardView.GetView(second.Id);
 
-                    viewA.PlayFlipDown();
-                    viewB.PlayFlipDown();
+                    viewA?.PlayFlipDown();
+                    viewB?.PlayFlipDown();
+
+                    OnMismatch?.Invoke();
                 }
             }
 
