@@ -1,18 +1,22 @@
 namespace CardMatch.Core.Domain
 {
-    public sealed class MatchResolver
+    public sealed class ComboTracker
     {
-        public MatchResult Evaluate(CardModel first, CardModel second)
+        public int CurrentCombo { get; private set; }
+
+        public void RegisterMatch()
         {
-            if (first == null || second == null)
-                return MatchResult.Mismatch;
+            CurrentCombo++;
+        }
 
-            if (first.Id == second.Id)
-                return MatchResult.Mismatch;
+        public void RegisterMismatch()
+        {
+            CurrentCombo = 0;
+        }
 
-            return first.PairId == second.PairId
-                ? MatchResult.Match
-                : MatchResult.Mismatch;
+        public void Reset()
+        {
+            CurrentCombo = 0;
         }
     }
 }
