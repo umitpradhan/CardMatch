@@ -2,6 +2,7 @@ using UnityEngine;
 using CardMatch.Core.Domain;
 using CardMatch.Services.ScoreServices;
 using CardMatch.Services.AudioServices;
+using CardMatch.Services.SaveServices;
 using CardMatch.Presentation.UI;
 
 namespace CardMatch.Core.GameFlow
@@ -15,8 +16,11 @@ namespace CardMatch.Core.GameFlow
 
         private ScoreService _scoreService;
         private GameSession _session;
+        private SaveService _saveService;
+        private int _seed;
+        private float _remainingTime;
 
-        public void Initialize(BoardModel board, TurnController turnController)
+        public void Initialize(BoardModel board, TurnController turnController, int seed)
         {
             var scoreConfig = new ScoreConfig();
             var calculator = new ScoreCalculator(scoreConfig);
@@ -29,6 +33,9 @@ namespace CardMatch.Core.GameFlow
 
             _session = new GameSession(board, turnController);
 
+            _saveService = new SaveService();
+            _seed = seed;
+
             HookTurnController(turnController);
         }
 
@@ -38,10 +45,24 @@ namespace CardMatch.Core.GameFlow
             turnController.OnMismatch += HandleMismatch;
         }
 
+        private void AutoSave()
+        {
+            var data = SaveMapper.ToSaveData(
+                _session.Board,
+                _scoreService.CurrentScore,
+                _scoreService.CurrentCombo,
+                _remainingTime,
+                _seed);
+
+            _saveService.Save(data);
+        }
+
         private void HandleMatch()
         {
             _scoreService.RegisterMatch();
             _audioService.Play(AudioEvent.Match);
+
+            AutoSave();
 
             if (_session.IsGameOver())
             {
@@ -54,6 +75,8 @@ namespace CardMatch.Core.GameFlow
         {
             _scoreService.RegisterMismatch();
             _audioService.Play(AudioEvent.Mismatch);
+
+            AutoSave();
         }
     }
 }
